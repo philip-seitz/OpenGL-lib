@@ -29,25 +29,26 @@ void SandboxLayer::OnAttach()
 	glBindVertexArray(m_QuadVA);
 
 	float vertices[] = {
-		-1.5f, -0.5f, 0.0f,
-		 -0.5f, -0.5f, 0.0f,
-		 -0.5f,  0.5f, 0.0f,
-		-1.5f,  0.5f, 0.0f,
+		-1.5f, -0.5f, 0.0f, 0.7f, 0.3f, 0.1f, 1.0f,
+		 -0.5f, -0.5f, 0.0f, 0.7f, 0.3f, 0.1f, 1.0f,
+		 -0.5f,  0.5f, 0.0f, 0.7f, 0.3f, 0.1f, 1.0f,
+		-1.5f,  0.5f, 0.0f, 0.7f, 0.3f, 0.1f, 1.0f,
 
-		 0.5f, -0.5f, 0.0f,
-		 1.5f, -0.5f, 0.0f,
-		 1.5f,  0.5f, 0.0f,
-		 0.5f,  0.5f, 0.0f
+		 0.5f, -0.5f, 0.0f, 0.1f, 0.3f, 0.6f, 1.0f,
+		 1.5f, -0.5f, 0.0f, 0.1f, 0.3f, 0.6f, 1.0f,
+		 1.5f,  0.5f, 0.0f, 0.1f, 0.3f, 0.6f, 1.0f, 
+		 0.5f,  0.5f, 0.0f, 0.1f, 0.3f, 0.6f, 1.0f
 	};
-
-
 
 	glCreateBuffers(1, &m_QuadVB);
 	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (const void*)12);
 
 	uint32_t indices[] =
 	{ 
@@ -57,9 +58,7 @@ void SandboxLayer::OnAttach()
 	glCreateBuffers(1, &m_QuadIB);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIB);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	// Init here
 
-	
 }
 
 void SandboxLayer::OnDetach()
@@ -67,12 +66,11 @@ void SandboxLayer::OnDetach()
 	glDeleteVertexArrays(1, &m_QuadVA);
 	glDeleteBuffers(1, &m_QuadVB);
 	glDeleteBuffers(1, &m_QuadIB);
-	// Shutdown here
 }
 
 void SandboxLayer::OnEvent(Event& event)
 {
-	// Events here
+	// zoom
 	m_CameraController.OnEvent(event);
 }
 
@@ -97,7 +95,6 @@ void SandboxLayer::OnUpdate(Timestep ts)
 
 	glBindVertexArray(m_QuadVA);
 	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
-	
 }
 
 void SandboxLayer::OnImGuiRender()
