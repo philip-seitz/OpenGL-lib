@@ -31,6 +31,7 @@ void SandboxLayer::OnEvent(Event& event)
 void SandboxLayer::OnUpdate(Timestep ts)
 {
 	// Render here
+	// KEKW
 }
 
 void SandboxLayer::OnImGuiRender()
