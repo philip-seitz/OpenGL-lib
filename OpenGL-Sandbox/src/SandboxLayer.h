@@ -19,7 +19,7 @@ private:
 	GLCore::Utils::Shader* m_Shader;
 	GLCore::Utils::OrthographicCameraController m_CameraController;
 
-	GLuint m_QuadVA, m_QuadVB, m_QuadIB;
+	GLuint m_QuadVA, m_QuadVB, m_QuadIB, m_Cyberpunk, m_Tom;
 
 	glm::vec4 m_SquareBaseColor = { 0.8f, 0.2f, 0.3f, 1.0f };
 	
