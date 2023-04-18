@@ -33,13 +33,45 @@ void LoadTexture(const char* name, unsigned int & id)
 }
 
 SandboxLayer::SandboxLayer()
-	: m_CameraController(16.0f / 9.0f), m_Cyberpunk(0)
+	: m_CameraController(16.0f / 9.0f), m_Cyberpunk(0), m_PosQ1{-1.5f, -0.5f}, m_PosQ2{ 0.5f, -0.5f }
 {
 	
 }
 
 SandboxLayer::~SandboxLayer()
 {
+}
+
+static std::array<Vertex, 4> CreateQuad(const float& x, const float& y, const float& size, const float& texID)
+{
+	Vertex v0;
+	v0.Position = { x, y, 0.0f };
+	v0.Color = { 0.7f, 0.3f, 0.1f, 1.0f };
+	v0.TexCoords = { 0.0f, 0.0f };
+	v0.TexID = texID;
+
+	Vertex v1;
+	v1.Position = { x + size, y, 0.0f };
+	v1.Color = { 0.7f, 0.3f, 0.1f, 1.0f };
+	v1.TexCoords = { 1.0f, 0.0f };
+	v1.TexID = texID;
+
+	Vertex v2;
+	v2.Position = { x + size,  y + size, 0.0f };
+	v2.Color = { 0.7f, 0.3f, 0.1f, 1.0f };
+	v2.TexCoords = { 1.0f, 1.0f };
+	v2.TexID = texID;
+
+	Vertex v3;
+	v3.Position = {x,  y + size, 0.0f };
+	v3.Color = { 0.7f, 0.3f, 0.1f, 1.0f };
+	v3.TexCoords = { 0.0f, 1.0f };
+	v3.TexID = texID;
+
+	std::array <Vertex, 4> outp = { v0, v1, v2, v3 };
+
+	return outp;
+
 }
 
 void SandboxLayer::OnAttach()
@@ -63,33 +95,35 @@ void SandboxLayer::OnAttach()
 	auto loc = glGetUniformLocation(m_Shader->GetRendererID(), "u_Textures");
 	glUniform1iv(loc, 2, samplers);
 
-	float vertices[] = {
-		-1.5f, -0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 0.0f,		0.0f, 
-		 -0.5f, -0.5f, 0.0f,	0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 0.0f,		0.0f,
-		 -0.5f,  0.5f, 0.0f,	0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 1.0f,		0.0f,
-		-1.5f,  0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 1.0f,		0.0f,
+	//float vertices[] = {
+	//	-1.5f, -0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 0.0f,		0.0f, 
+	//	 -0.5f, -0.5f, 0.0f,	0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 0.0f,		0.0f,
+	//	 -0.5f,  0.5f, 0.0f,	0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 1.0f,		0.0f,
+	//	-1.5f,  0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 1.0f,		0.0f,
 
-		 0.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 0.0f,		1.0f,
-		 1.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 0.0f,		1.0f,
-		 1.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 1.0f,		1.0f,
-		 0.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 1.0f,		1.0f
-	};
+	//	 0.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 0.0f,		1.0f,
+	//	 1.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 0.0f,		1.0f,
+	//	 1.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 1.0f,		1.0f,
+	//	 0.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 1.0f,		1.0f
+	//};
+
+	// sVertex vertices[8];
 
 	glCreateBuffers(1, &m_QuadVB);
 	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * 1000, nullptr, GL_DYNAMIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 10, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, Position));
 
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 10, (const void*)12);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, Color));
 
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 10, (const void*)28);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, TexCoords));
 
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float) * 10, (const void*)36);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, TexID));
 
 	LoadTexture("assets/textures/cyberpunk_tex.png", m_Cyberpunk);
 	LoadTexture("assets/textures/tawm.png", m_Tom);
@@ -122,6 +156,31 @@ void SandboxLayer::OnUpdate(Timestep ts)
 {
 	m_CameraController.OnUpdate(ts);
 
+	auto q0 = CreateQuad(m_PosQ1.x, m_PosQ1.y, 1.0f, 0.0f);				// cyberpunk
+	auto q1 = CreateQuad(m_PosQ2.x, m_PosQ2.y, 1.0f, 1.0f);				// tom
+
+	Vertex vertices[8];
+	memcpy(vertices, q0.data(), q0.size() * sizeof(Vertex));
+	memcpy(vertices + q0.size(), q1.data(), q1.size() * sizeof(Vertex));
+
+	/*float vertices[] = {
+	-1.5f, -0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 0.0f,		0.0f,
+	-0.5f, -0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 0.0f,		0.0f,
+	-0.5f,  0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 1.0f,		0.0f,
+	-1.5f,  0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 1.0f,		0.0f,
+
+	0.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 0.0f,		1.0f,
+	1.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 0.0f,		1.0f,
+	1.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 1.0f,		1.0f,
+	0.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 1.0f,		1.0f
+	};*/
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);		
+	// auch über glMapBuffer und glUnmapBuffer möglich (aber langsamer und nicht so gut abwärtskomp)
+
+
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -149,4 +208,9 @@ void SandboxLayer::OnUpdate(Timestep ts)
 void SandboxLayer::OnImGuiRender()
 {
 	// ImGui here
+
+	ImGui::Begin("Controls");
+	ImGui::DragFloat2("Position CP", &m_PosQ1.x, 0.01f);
+	ImGui::DragFloat2("Position Tom", &m_PosQ2.x, 0.01f);
+	ImGui::End();
 }
