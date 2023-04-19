@@ -42,7 +42,7 @@ SandboxLayer::~SandboxLayer()
 {
 }
 
-static std::array<Vertex, 4> CreateQuad(const float& x, const float& y, const float& size, const float& texID)
+static Quad CreateQuad(const float& x, const float& y, const float& size, const float& texID)
 {
 	Vertex v0;
 	v0.Position = { x, y, 0.0f };
@@ -68,19 +68,19 @@ static std::array<Vertex, 4> CreateQuad(const float& x, const float& y, const fl
 	v3.TexCoords = { 0.0f, 1.0f };
 	v3.TexID = texID;
 
-	std::array <Vertex, 4> outp = { v0, v1, v2, v3 };
+	Quad outp = { v0, v1, v2, v3 };
 
 	return outp;
-
 }
 
-static IndexBuffer CreateIB(const unsigned int& noIndex)
+static IndexBuffer CreateQuadIB(const unsigned int& noIndex)
 {
 	unsigned offset = 4;
 	unsigned shift = offset * noIndex;
 	IndexBuffer i0;
 	i0.QuadIndices = { 0 + shift, 1 + shift, 2 + shift, 2 + shift, 3 + shift, 0 + shift};
 
+	
 	return i0;
 }
 
@@ -105,20 +105,6 @@ void SandboxLayer::OnAttach()
 	auto loc = glGetUniformLocation(m_Shader->GetRendererID(), "u_Textures");
 	glUniform1iv(loc, 2, samplers);
 
-	//float vertices[] = {
-	//	-1.5f, -0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 0.0f,		0.0f, 
-	//	 -0.5f, -0.5f, 0.0f,	0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 0.0f,		0.0f,
-	//	 -0.5f,  0.5f, 0.0f,	0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 1.0f,		0.0f,
-	//	-1.5f,  0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 1.0f,		0.0f,
-
-	//	 0.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 0.0f,		1.0f,
-	//	 1.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 0.0f,		1.0f,
-	//	 1.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 1.0f,		1.0f,
-	//	 0.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 1.0f,		1.0f
-	//};
-
-	// sVertex vertices[8];
-
 	glCreateBuffers(1, &m_QuadVB);
 	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * 1000, nullptr, GL_DYNAMIC_DRAW);
@@ -138,14 +124,9 @@ void SandboxLayer::OnAttach()
 	LoadTexture("assets/textures/cyberpunk_tex.png", m_Cyberpunk);
 	LoadTexture("assets/textures/tawm.png", m_Tom);
 
-	/*uint32_t indices[] =
-	{ 
-		0, 1, 2, 2, 3, 0,
-		4, 5, 6, 6, 7, 4
-	};*/
 	glCreateBuffers(1, &m_QuadIB);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIB);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4*sizeof(unsigned int) * 1000, nullptr, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexBuffer) * 1000, nullptr, GL_DYNAMIC_DRAW);
 
 }
 
@@ -166,56 +147,23 @@ void SandboxLayer::OnUpdate(Timestep ts)
 {
 	m_CameraController.OnUpdate(ts);
 
-	auto q0 = CreateQuad(m_PosQ1.x, m_PosQ1.y, 1.0f, 0.0f);				// cyberpunk
-	auto q1 = CreateQuad(m_PosQ2.x, m_PosQ2.y, 1.0f, 1.0f);				// tom
+	Quad* quad = new Quad[m_NoQuads];
+	IndexBuffer* ibuf = new IndexBuffer[m_NoQuads];
 
-	Vertex vertices[8];
-	memcpy(vertices, q0.data(), q0.size() * sizeof(Vertex));
-	memcpy(vertices + q0.size(), q1.data(), q1.size() * sizeof(Vertex));
-
-	/*float vertices[] = {
-	-1.5f, -0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 0.0f,		0.0f,
-	-0.5f, -0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 0.0f,		0.0f,
-	-0.5f,  0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		1.0f, 1.0f,		0.0f,
-	-1.5f,  0.5f, 0.0f,		0.7f, 0.3f, 0.1f, 1.0f,		0.0f, 1.0f,		0.0f,
-
-	0.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 0.0f,		1.0f,
-	1.5f, -0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 0.0f,		1.0f,
-	1.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		1.0f, 1.0f,		1.0f,
-	0.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 1.0f,		1.0f
-	};*/
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);		
-	// auch über glMapBuffer und glUnmapBuffer möglich (aber langsamer und nicht so gut abwärtskomp)
-
-	unsigned int limit = m_NoQuads;
-	Vertex* vert = (Vertex*)_malloca(m_NoQuads * sizeof(Vertex));
-	IndexBuffer* ibuf = (IndexBuffer*)_malloca(m_NoQuads * sizeof(IndexBuffer));
-	/*for (int i = 0; i < m_NoQuads; i++)
+	for (int i = 0; i < m_NoQuads; i++)
 	{
-		auto q = CreateQuad(m_PosQ1.x + 2.0f * i, m_PosQ1.y, 1.0f, 0.0f);
-		IndexBuffer ind = CreateIB(i);
+		Quad q = CreateQuad(m_PosQ1.x + 1.2f * i, m_PosQ1.y, 1.0f, 0.0f);
+		IndexBuffer ind = CreateQuadIB(i);
 
-		memcpy(vert + i*4, q.data(), q.size() * sizeof(Vertex));
-		memcpy(ibuf, &ind + i, sizeof(IndexBuffer));
+		quad[i] = q;
+		ibuf[i] = ind;
+	}
 
-	}*/
 	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vert), vert);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_NoQuads * sizeof(Quad), quad);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIB);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(ibuf), ibuf);
-
-	/*IndexBuffer i0 = CreateIB(0);
-	IndexBuffer i1 = CreateIB(1);
-
-	IndexBuffer indices[2];
-	memcpy(indices, &i0, sizeof(IndexBuffer));
-	memcpy(indices + 1, &i1, sizeof(Vertex));*/
-
-	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIB);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(indices), indices);*/
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, m_NoQuads * sizeof(IndexBuffer), ibuf);
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -237,7 +185,10 @@ void SandboxLayer::OnUpdate(Timestep ts)
 	glUniform4fv(location, 1, glm::value_ptr(m_SquareBaseColor));
 
 	glBindVertexArray(m_QuadVA);
-	glDrawElements(GL_TRIANGLES, m_NoQuads * 6, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, 6 * m_NoQuads, GL_UNSIGNED_INT, nullptr);
+
+	delete[] quad;
+	delete[] ibuf;
 }
 
 void SandboxLayer::OnImGuiRender()
@@ -247,11 +198,6 @@ void SandboxLayer::OnImGuiRender()
 	ImGui::Begin("Controls");
 	ImGui::DragFloat2("Position CP", &m_PosQ1.x, 0.01f);
 	ImGui::DragFloat2("Position Tom", &m_PosQ2.x, 0.01f);
-	if (ImGui::Checkbox("1 oder 2 Quads", &numQuads))
-		if (numQuads)
-			m_NoQuads = 1;
-		else
-			m_NoQuads = 2;
-
+	ImGui::SliderInt("Number of Quads", (int*)&m_NoQuads, 0, 10);
 	ImGui::End();
 }

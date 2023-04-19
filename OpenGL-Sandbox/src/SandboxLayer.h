@@ -35,9 +35,20 @@ struct Vertex
 	float TexID;
 };
 
+struct Quad
+{
+	Vertex v0, v1, v2, v3;
+};
+
 struct IndexBuffer
 {
 	Vec6 QuadIndices;
+
+};
+
+struct QuadIndex
+{
+	IndexBuffer i0, i1;
 
 };
 
