@@ -33,7 +33,7 @@ void LoadTexture(const char* name, unsigned int & id)
 }
 
 SandboxLayer::SandboxLayer()
-	: m_CameraController(16.0f / 9.0f), m_Cyberpunk(0), m_PosQ1{-1.5f, -0.5f}, m_PosQ2{ 0.5f, -0.5f }
+	: m_CameraController(16.0f / 9.0f), m_Cyberpunk(0), m_PosQ1{-1.5f, -0.5f}, m_PosQ2{ 0.5f, -0.5f }, m_NoQuads(1)
 {
 	
 }
@@ -72,6 +72,16 @@ static std::array<Vertex, 4> CreateQuad(const float& x, const float& y, const fl
 
 	return outp;
 
+}
+
+static IndexBuffer CreateIB(const unsigned int& noIndex)
+{
+	unsigned offset = 4;
+	unsigned shift = offset * noIndex;
+	IndexBuffer i0;
+	i0.QuadIndices = { 0 + shift, 1 + shift, 2 + shift, 2 + shift, 3 + shift, 0 + shift};
+
+	return i0;
 }
 
 void SandboxLayer::OnAttach()
@@ -128,14 +138,14 @@ void SandboxLayer::OnAttach()
 	LoadTexture("assets/textures/cyberpunk_tex.png", m_Cyberpunk);
 	LoadTexture("assets/textures/tawm.png", m_Tom);
 
-	uint32_t indices[] =
+	/*uint32_t indices[] =
 	{ 
 		0, 1, 2, 2, 3, 0,
 		4, 5, 6, 6, 7, 4
-	};
+	};*/
 	glCreateBuffers(1, &m_QuadIB);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIB);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4*sizeof(unsigned int) * 1000, nullptr, GL_DYNAMIC_DRAW);
 
 }
 
@@ -175,11 +185,37 @@ void SandboxLayer::OnUpdate(Timestep ts)
 	0.5f,  0.5f, 0.0f,		0.1f, 0.3f, 0.6f, 1.0f,		0.0f, 1.0f,		1.0f
 	};*/
 
-
 	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);		
 	// auch über glMapBuffer und glUnmapBuffer möglich (aber langsamer und nicht so gut abwärtskomp)
 
+	unsigned int limit = m_NoQuads;
+	Vertex* vert = (Vertex*)_malloca(m_NoQuads * sizeof(Vertex));
+	IndexBuffer* ibuf = (IndexBuffer*)_malloca(m_NoQuads * sizeof(IndexBuffer));
+	/*for (int i = 0; i < m_NoQuads; i++)
+	{
+		auto q = CreateQuad(m_PosQ1.x + 2.0f * i, m_PosQ1.y, 1.0f, 0.0f);
+		IndexBuffer ind = CreateIB(i);
+
+		memcpy(vert + i*4, q.data(), q.size() * sizeof(Vertex));
+		memcpy(ibuf, &ind + i, sizeof(IndexBuffer));
+
+	}*/
+	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVB);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vert), vert);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIB);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(ibuf), ibuf);
+
+	/*IndexBuffer i0 = CreateIB(0);
+	IndexBuffer i1 = CreateIB(1);
+
+	IndexBuffer indices[2];
+	memcpy(indices, &i0, sizeof(IndexBuffer));
+	memcpy(indices + 1, &i1, sizeof(Vertex));*/
+
+	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIB);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(indices), indices);*/
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -197,20 +233,25 @@ void SandboxLayer::OnUpdate(Timestep ts)
 	location = glGetUniformLocation(m_Shader->GetRendererID(), "u_Transform");
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
-
 	location = glGetUniformLocation(m_Shader->GetRendererID(), "u_Color");
 	glUniform4fv(location, 1, glm::value_ptr(m_SquareBaseColor));
 
 	glBindVertexArray(m_QuadVA);
-	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, m_NoQuads * 6, GL_UNSIGNED_INT, nullptr);
 }
 
 void SandboxLayer::OnImGuiRender()
 {
 	// ImGui here
-
+	static bool numQuads = true;
 	ImGui::Begin("Controls");
 	ImGui::DragFloat2("Position CP", &m_PosQ1.x, 0.01f);
 	ImGui::DragFloat2("Position Tom", &m_PosQ2.x, 0.01f);
+	if (ImGui::Checkbox("1 oder 2 Quads", &numQuads))
+		if (numQuads)
+			m_NoQuads = 1;
+		else
+			m_NoQuads = 2;
+
 	ImGui::End();
 }

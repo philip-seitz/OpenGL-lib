@@ -21,12 +21,24 @@ struct Vec4
 
 };
 
+struct Vec6
+{
+	unsigned int a, b, c, d, e, f;
+
+};
+
 struct Vertex
 {
 	Vec3 Position;
 	Vec4 Color;
 	Vec2 TexCoords;
 	float TexID;
+};
+
+struct IndexBuffer
+{
+	Vec6 QuadIndices;
+
 };
 
 class SandboxLayer : public GLCore::Layer
@@ -45,7 +57,7 @@ private:
 	GLCore::Utils::Shader* m_Shader;
 	GLCore::Utils::OrthographicCameraController m_CameraController;
 
-	GLuint m_QuadVA, m_QuadVB, m_QuadIB, m_Cyberpunk, m_Tom;
+	GLuint m_QuadVA, m_QuadVB, m_QuadIB, m_Cyberpunk, m_Tom, m_NoQuads;
 
 	Vec2 m_PosQ1, m_PosQ2;
 
